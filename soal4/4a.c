@@ -73,7 +73,7 @@ int main(){
 	int k = 0;
 
 	for(int i = 0; i < 20; i++){
-		if(k > 5){
+		if(k > 4){
 	   		j++;
 	   		k = 0;
 		}
