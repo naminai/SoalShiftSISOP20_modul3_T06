@@ -25,9 +25,9 @@ typedef long long ll;
 void* factorial(void* arg){
 	int i = *((int*)arg);
 	free(arg);;
-	ll total = 1;
+	ll total = 0;
 	for(int j = i; j > 0 ;j--){
-		total *= j;
+		total += j;
 	}
 	if(row > 4){
 		printf("\n");
