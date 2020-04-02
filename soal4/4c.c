@@ -1,78 +1,34 @@
 #include <stdio.h>
-#include <string.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <string.h>
 #include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#define MAX 256
-#define UNREADY -1
-#define READY 0
-#define TAKEN 1
 
-struct memory{
-    int status;
-    int data[256];
-};
+int main() {
+  int fd[2];
+  pid_t pid;
 
-int baris = 0;
-int row = 0;
-int matC[4][5];
-typedef long long ll;
+  pipe(fd);
 
-void* factorial(void* arg){
-	int i = *((int*)arg);
-	free(arg);;
-	ll total = 0;
-	for(int j = i; j > 0 ;j--){
-		total += j;
-	}
-	if(row > 4){
-		printf("\n");
-		row = 0;
-	}
-	printf("%15llu", total);
-	row++;
+  pid = fork();
+  if (pid == 0) {
+    dup2(fd[1], 1);
+    close(fd[0]);
+    close(fd[1]);
+    execl("/bin/ls", "ls", NULL);
+  }
+  while(wait(NULL) > 0);
+
+  pid = fork();
+  if (pid == 0) {
+    dup2(fd[0], 0);
+    close(fd[0]);
+    close(fd[1]);
+    close(fd[2]);
+    close(fd[3]);
+    execl("/usr/bin/wc", "wc", "-l", NULL);
+  }
+  return 0;
 }
 
-int main(){
-	key_t key;
-	int ID;
-	struct memory *ptr;
-	key = ftok("key",100);
-	ID = shmget(key, sizeof(struct memory), 0666);
-	if(ID < 0){
-		printf(" ** SHMERROR CLIENT! ** \n");
-		exit(1);
-	}
-	
-	ptr = (struct memory*) shmat(ID, NULL, 0); 
-	while (ptr->status != READY) 
-	;
-
-	printf("Matriks C: \n");
-	while(baris < 4){
-		memcpy(matC, &ptr->data, 256 * sizeof(int));
-		for(int k=0; k<5; k++){
-      			printf("%4d", matC[baris][k]);
-		}
-		baris++;
-		printf("\n");
-	}
-
-	printf("Matriks C Faktorial: \n");
-	pthread_t tid[20];
-	for(int i = 0; i < 20;i++){
-		int *x =  malloc(sizeof(*x));
-		*x = ptr->data[i];
-		pthread_create(&(tid[i]), NULL, &factorial, x);
-		pthread_join(tid[i], NULL);
-
-	}
-	ptr->status = TAKEN; 
-	shmdt((void *) ptr);
-	printf("\n");
-	return 0;
-}
