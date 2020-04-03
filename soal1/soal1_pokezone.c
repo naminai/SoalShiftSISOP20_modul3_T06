@@ -1,2 +1,3 @@
 #include<stdio.h>
-mantap lur
+puts("mantap lur")
+puts("next soal pokemon go?")
