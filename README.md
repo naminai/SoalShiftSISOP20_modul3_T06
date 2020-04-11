@@ -10,13 +10,215 @@ Kelompok T06
 * [Soal 4](#soal-4) 
   * [Soal 4.a.](#soal-4a) 
   * [Soal 4.b.](#soal-4b) 
-  * [Soal 4.c.](#soal-4c)  
-* [Kendala]
+  * [Soal 4.c.](#soal-4c)
+* [Kendala Praktikkan](#kendala)
 --- 
 
 ## Soal 3
 Source Code : [source](https://github.com/naminai/SoalShiftSISOP20_modul2_T06/tree/master/soal3)
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <ctype.h>
+#define _GNU_SOURCE 
+#define MAX 10000
+```
+Disini terdapat kita meng-include header file yang akan digunakan pada penyelesaian soal 3 ini. Kemudian juga kita `define MAX` untuk isi dari array-array yang akan kita gunakan dibawah. Lalu, kita juga `define _GNU_SOURCE` untuk mendapatkan beberapa fungsi Linux nonstandard (`DT_REG` dan `DT_DIR`). 
+```
+char wrdir[MAX];
+pthread_t tid[3]; 
+char *path[MAX];
+```
+Deklarasi variabel `wrdir[MAX]` untuk menampung `cwd` dan `*path[MAX]` untuk mendapatkan full path direktori. Kemudian kita deklarasikan pula `tid[3]` sesuai jumlah argumen.
+```
+char *struprt(char *str) {
+        char *next = str;
+        while (*str != '\0') {
+            *str = toupper((unsigned char)*str);
+            return str; 
+        } 
+}
+```
+Disini kita deklarasikan fungsi untuk membuat karakter lowercase menjadi uppercase sehingga tidak case-sensitive.
 
+```
+void* kategori(void *arg)
+{
+    char temp[MAX];
+    char *temp2[MAX];
+    char newname[MAX];
+    int length1 = 0; 
+    int length2 = 0;
+    char *pathfile;
+    char *filename;
+```
+Deklarasi variabel yang akan digunakan. `temp` dan `temp2` digunakan untuk menampung nama file dalam absolute path beserta ekstensi. `newname` digunakan untuk menampung hasil dari `temp` yang sudah menjadi nama file dan ekstensi. `length` dan `length2` untuk mendapatkan panjang dari string full path dan nama file. 
+```
+    strcpy(temp,arg);
+    filename = strtok(temp, "/");
+    while(filename != NULL){
+        temp2[length1] = filename;
+        length1++;
+        filename = strtok(NULL, "/");
+    }
+    strcpy(newname,temp2[length1-1]);
+```
+Menghasilkan file denga nama serta ekstensi.
+```
+    pathfile = strtok(temp2[length1-1], ".");
+    while(pathfile !=  NULL){
+        path[length2] = pathfile;
+        length2++;
+        pathfile = strtok(NULL, ".");
+    }
+```
+Menghasilkan ekstensi dari file.
+```
+    char lcase[100];
+    strcpy(lcase,path[length2-1]);
+    struprt(lcase);
+```
+Membuat ekstensi file tidak case-sensitive menggunakan fungsi struprt.
+```
+    DIR *d;
+    struct dirent *dir;
+    char path[MAX];
+    d = opendir(wrdir);
+```
+Membuka current working directory untuk di-stream dengan menggunakan `opendir`.
+```
+    int flag = 0;
+    if(length2 > 1){
+        if(dir){
+            while((dir = readdir(d)) != NULL){
+                if(strcmp(dir->d_name,lcase) == 0 && dir->d_type == DT_DIR){
+                    flag = 1;
+                    break;
+                }
+            }
+        }
+```
+Melakukan cek apakah sudah ada direktori bernama ekstensi file pada direktori ini.	
+```
+        if(flag == 0){
+            strcpy(path,wrdir);
+            strcat(path,"/");
+            strcat(path,lcase);
+            mkdir(path, 0777);
+        } else{
+            // puts(error);
+        }
+```
+Jika belum ada, maka kita buat direktori ekstensi file.
+```
+    }else{
+        strcpy(path,wrdir);
+        strcat(path,"/");
+        strcat(path,"Unknown");
+        mkdir(path, 0777);
+    }
+```
+Untuk file yang tidak memiliki ekstensi, kita buat direktori `Unkown`
+```
+    char move[MAX];
+    char moved[MAX];
+    strcpy(move,arg);
+    strcpy(moved,wrdir);
+    strcat(moved,"/");
+    if(length2 == 1){
+        strcat(moved,"Unknown");
+    }
+    else{
+        strcat(moved,lcase);
+    }
+```
+Membuat fullpath dari file tanpa nama file.
+```
+    strcat(moved,"/");
+    strcat(moved,newname);
+    rename(move,moved);
+    length2 = 0;
+    length1 = 0;
+}
+```
+Menambahkan nama file ke fullpath. Lalu reset `length2` dan `length1` untuk digunakan pada file berikutnya.
+```
+int main(int argc, char *argv[]) {
+    DIR *d;
+    struct dirent *dir;
+    char pathdir[100];
+    if(getcwd(wrdir, sizeof(wrdir)) != NULL) {
+        printf("Current directory: %s\n", wrdir);
+    } 
+```
+Membuka direktori yang kita gunakan sekarang dan print nama dari current working directory.  
+```
+    if (strcmp(argv[1],"-f") == 0) {
+        int i=0;
+        for(int j = 2 ; j < argc ; j++ ){
+            pthread_create(&(tid[i]),NULL,kategori,argv[j]);
+            pthread_join(tid[i],NULL);
+            i++;
+        }
+    }
+```
+Untuk case pertama `-f` dimana 2 file dicari, maka kita hanya membuat 2 thread untuk memindahkan kedua file tersebut.
+```
+     
+    else if(strcmp(argv[1],"*") == 0){
+        d = opendir(wrdir);
+        if(d){
+            while((dir = readdir(d)) != NULL){
+                if ((strcmp(dir->d_name, ".") == 0) || (strcmp(dir->d_name, "..") == 0) )
+                    continue;
+```
+Untuk case kedua `*` kita buka current working directory, lalu kita skip `.` dan `..`.
+```
+                strcpy(pathdir,wrdir);
+                strcat(pathdir,"/");
+                strcat(pathdir,dir->d_name);
+                int i  = 0;
+                if(dir->d_type == DT_REG){
+                    pthread_create(&(tid[i]),NULL,kategori,pathdir); 
+                    pthread_join(tid[i],NULL);
+                    i++;
+                }
+            }
+	}
+```
+Jika didalamnya terdapat file  (`if (dir->d_type == DT_REG)`) maka  kita buat thread sesuai dengan banyaknya file disitu.
+```
+        else if(strcmp(argv[1], "-d") == 0) {
+            d = opendir(argv[2]);
+            if(d){
+                while ((dir = readdir(d)) != NULL){
+                        if ((strcmp(dir->d_name, ".") == 0) || (strcmp(dir->d_name, "..") == 0) )
+                            continue;
+                        strcpy(pathdir,argv[2]);
+                        printf("%s", pathdir);
+                        strcat(pathdir,"/");
+                        strcat(pathdir,dir->d_name);
+                        printf("%s", pathdir);
+                        int i = 0;
+                        if(dir->d_type == DT_REG){
+                            pthread_create(&(tid[i]),NULL,kategori,pathdir); 
+                            pthread_join(tid[i],NULL);
+                            i++;
+                    }
+                }
+            }
+        }
+    }
+    return 0; 
+}
+```
+Untuk `-d` yaitu direktori lain, maka sama saja dengan diatas, hanya bedanya kita menggunakan path direktori sebagai input, bukan `getcwd`. Lalu untuk setiap file dalam direktori kita create thread dan join.
 
 ## Soal 4
 Source Code : [source](https://github.com/naminai/SoalShiftSISOP20_modul2_T06/tree/master/soal4)
@@ -242,7 +444,7 @@ Menampilkan hasil dari penambahan per elemen dari matriks C dengan menggunakan e
 ```
 Kita rubah status menjadi `TAKEN` lalu kita detach dengan `shmdt`.
 
-### 4.c.
+### Soal 4.c.
 ```
 #include <stdio.h>
 #include <stdlib.h>
