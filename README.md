@@ -219,6 +219,10 @@ Jika didalamnya terdapat file  (`if (dir->d_type == DT_REG)`) maka  kita buat th
 }
 ```
 Untuk `-d` yaitu direktori lain, maka sama saja dengan diatas, hanya bedanya kita menggunakan path direktori sebagai input, bukan `getcwd`. Lalu untuk setiap file dalam direktori kita create thread dan join.
+### Output Soal 3
+![modul 3 soal 3 kategori -f](https://user-images.githubusercontent.com/61267430/79032182-aaf6c580-7bce-11ea-9ff0-2ffc72f47a52.png)
+![Soal 3 kategori bintang](https://user-images.githubusercontent.com/61267430/79032181-aa5e2f00-7bce-11ea-816f-a31fa1019cfb.png)
+![Soal 3 kategori bintang](https://user-images.githubusercontent.com/61267430/79032181-aa5e2f00-7bce-11ea-816f-a31fa1019cfb.png)
 
 ## Soal 4
 Source Code : [source](https://github.com/naminai/SoalShiftSISOP20_modul2_T06/tree/master/soal4)
@@ -339,6 +343,9 @@ Lalu, kita update status menjadi `READY` sehingga data bisa kita share melalui s
 ```
 Selama `status` masih belum `TAKEN`, yang berarti bahwa program 4b belum selesai berjalan (berarti pula shared memory belum boleh diputus/detach). Maka kita sleep. Jika sudah, maka kita gunakan `shmdt` untuk detach shared memory dan `shmctl` untuk melakukan kontrol sehingga status IPC shared memory di-reset.
 
+### Output Soal 4.a.
+![Modul 3 soal 4a](https://user-images.githubusercontent.com/61267430/79032183-ab8f5c00-7bce-11ea-8063-7f19841b8032.png)
+
 ### Soal 4.b.
 ```
 #include <stdio.h>
@@ -444,6 +451,9 @@ Menampilkan hasil dari penambahan per elemen dari matriks C dengan menggunakan e
 ```
 Kita rubah status menjadi `TAKEN` lalu kita detach dengan `shmdt`.
 
+### Output Soal 4.b.
+![Modul 3 soal 4b](https://user-images.githubusercontent.com/61267430/79032179-a7fbd500-7bce-11ea-8674-c40f799f7938.png)
+
 ### Soal 4.c.
 ```
 #include <stdio.h>
@@ -481,6 +491,10 @@ int main() {
 Disini cukup singkat, kita buat deklarasi fd[2] untuk digunakan sebagai jumlah pipe (1 masuk 1 keluar) nanti. Kemudian `pid` untuk fork kita. Kemudian kita gunakan `dup2(fd[1]), 1` untuk melakukan proses write pada `fd[1]` melalui pipe ke proses berikutnya. Kemudian kita close agar tidak error. Lalu kita ` execl("/bin/ls", "ls", NULL)` untuk menggunakan command `ls`.
 
 Kemudian, kita wait hingga selesai, barulah child kedua jalan, kita gunakan `dup2(fd[0]), 0` untuk melakukan proses read melalui pipe pada fd[0] (yang merupakan perintah `ls` sebelumnya). Kemudian kita close agar tidak error. Terakhir kita gunakan `execl("/usr/bin/wc", "wc", "-l", NULL)` untuk mendapatkan jumlah file dalam direktori ini.
+
+### Output Soal 4.c.
+![Modul 3 soal 4c](https://user-images.githubusercontent.com/61267430/79032180-a9c59880-7bce-11ea-93b4-9f01ba9f6cd0.png
+
 ## Kendala
 1. Soal terlalu kompleks untuk pemahaman kelompok kami yang sederhana 
 2. Minggu ETS sehingga fokus dalam mengerjakan tugas menjadi terbagi-bagi
